@@ -1,0 +1,30 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: dobby
+  labels:
+    app: dobby
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: dobby
+  template:
+    metadata:
+      labels:
+        app: dobby
+      annotations:
+        vault.hashicorp.com/agent-inject: "true"
+        vault.hashicorp.com/agent-inject-secret-my-application.json: "secret/data/my-application"
+        vault.hashicorp.com/agent-inject-template-my-application.json: |
+          {
+          {{ with secret "secret/data/my-application" -}}
+            "apiKey": "{{ .Data.data.apiKey }}"
+          {{- end}}
+          }
+        vault.hashicorp.com/role: "my-application"
+    spec:
+      serviceAccountName: my-application
+      containers:
+        - name: my-application
+          image: thecasualcoder/dobby
